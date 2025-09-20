@@ -1,0 +1,586 @@
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- 创建主屏幕GUI
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "AdvancedFunctionUI"
+screenGui.Parent = playerGui
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+-- 创建主按钮
+local mainButton = Instance.new("TextButton")
+mainButton.Name = "MainButton"
+mainButton.Size = UDim2.new(0, 60, 0, 60)
+mainButton.Position = UDim2.new(0, 20, 0.5, -30)
+mainButton.AnchorPoint = Vector2.new(0, 0.5)
+mainButton.BackgroundColor3 = Color3.fromRGB(61, 126, 232)
+mainButton.AutoButtonColor = false
+mainButton.Text = "⚔️"
+mainButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+mainButton.TextSize = 24
+mainButton.Font = Enum.Font.GothamBold
+mainButton.ZIndex = 2
+
+-- 添加圆角
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 12)
+corner.Parent = mainButton
+
+-- 添加阴影
+local shadow = Instance.new("ImageLabel")
+shadow.Name = "Shadow"
+shadow.Size = UDim2.new(1, 10, 1, 10)
+shadow.Position = UDim2.new(0, -5, 0, -5)
+shadow.BackgroundTransparency = 1
+shadow.Image = "rbxassetid://5554236805"
+shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
+shadow.ImageTransparency = 0.8
+shadow.ScaleType = Enum.ScaleType.Slice
+shadow.SliceCenter = Rect.new(10, 10, 118, 118)
+shadow.ZIndex = 1
+shadow.Parent = mainButton
+
+mainButton.Parent = screenGui
+
+-- 创建功能面板
+local functionPanel = Instance.new("Frame")
+functionPanel.Name = "FunctionPanel"
+functionPanel.Size = UDim2.new(0, 200, 0, 0)
+functionPanel.Position = UDim2.new(0, 90, 0.5, 0)
+functionPanel.AnchorPoint = Vector2.new(0, 0.5)
+functionPanel.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+functionPanel.ClipsDescendants = true
+functionPanel.Visible = false
+
+-- 面板圆角
+local panelCorner = Instance.new("UICorner")
+panelCorner.CornerRadius = UDim.new(0, 12)
+panelCorner.Parent = functionPanel
+
+-- 面板阴影
+local panelShadow = Instance.new("ImageLabel")
+panelShadow.Name = "PanelShadow"
+panelShadow.Size = UDim2.new(1, 10, 1, 10)
+panelShadow.Position = UDim2.new(0, -5, 0, -5)
+panelShadow.BackgroundTransparency = 1
+panelShadow.Image = "rbxassetid://5554236805"
+panelShadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
+panelShadow.ImageTransparency = 0.8
+panelShadow.ScaleType = Enum.ScaleType.Slice
+panelShadow.SliceCenter = Rect.new(10, 10, 118, 118)
+panelShadow.ZIndex = -1
+panelShadow.Parent = functionPanel
+
+-- 创建标题
+local title = Instance.new("TextLabel")
+title.Name = "Title"
+title.Size = UDim2.new(1, 0, 0, 40)
+title.Position = UDim2.new(0, 0, 0, 0)
+title.BackgroundTransparency = 1
+title.Text = "高级功能"
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.TextSize = 18
+title.Font = Enum.Font.GothamBold
+title.Parent = functionPanel
+
+-- 创建小刀功能按钮
+local knifeButton = Instance.new("TextButton")
+knifeButton.Name = "KnifeFunctionButton"
+knifeButton.Size = UDim2.new(0.9, 0, 0, 40)
+knifeButton.Position = UDim2.new(0.05, 0, 0, 50)
+knifeButton.BackgroundColor3 = Color3.fromRGB(61, 126, 232)
+knifeButton.Text = "开启小刀功能"
+knifeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+knifeButton.TextSize = 16
+knifeButton.Font = Enum.Font.GothamBold
+knifeButton.AutoButtonColor = false
+
+-- 小刀功能按钮圆角
+local knifeButtonCorner = Instance.new("UICorner")
+knifeButtonCorner.CornerRadius = UDim.new(0, 8)
+knifeButtonCorner.Parent = knifeButton
+
+-- 创建飞行跟踪按钮
+local flyButton = Instance.new("TextButton")
+flyButton.Name = "FlyToPlayerButton"
+flyButton.Size = UDim2.new(0.9, 0, 0, 40)
+flyButton.Position = UDim2.new(0.05, 0, 0, 100)
+flyButton.BackgroundColor3 = Color3.fromRGB(232, 126, 61)
+flyButton.Text = "幽灵追踪"
+flyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+flyButton.TextSize = 16
+flyButton.Font = Enum.Font.GothamBold
+flyButton.AutoButtonColor = false
+
+-- 飞行按钮圆角
+local flyButtonCorner = Instance.new("UICorner")
+flyButtonCorner.CornerRadius = UDim.new(0, 8)
+flyButtonCorner.Parent = flyButton
+
+knifeButton.Parent = functionPanel
+flyButton.Parent = functionPanel
+functionPanel.Parent = screenGui
+
+-- 状态变量
+local isOpen = false
+local isKnifeActive = false
+local isTracking = false
+local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+local knifeActiveConnection = nil
+local trackingConnection = nil
+local targetPlayer = nil
+local originalCollisionGroups = {}
+
+-- 主按钮点击事件
+mainButton.MouseButton1Click:Connect(function()
+    if isOpen then
+        -- 关闭面板
+        local closeTween = TweenService:Create(functionPanel, tweenInfo, {Size = UDim2.new(0, 200, 0, 0)})
+        closeTween:Play()
+        closeTween.Completed:Connect(function()
+            functionPanel.Visible = false
+        end)
+    else
+        -- 打开面板
+        functionPanel.Visible = true
+        local openTween = TweenService:Create(functionPanel, tweenInfo, {Size = UDim2.new(0, 200, 0, 150)})
+        openTween:Play()
+    end
+    isOpen = not isOpen
+end)
+
+-- 按钮交互效果函数
+local function setupButtonHoverEffects(button, normalColor, hoverColor, pressColor)
+    button.MouseEnter:Connect(function()
+        if not ((button == knifeButton and isKnifeActive) or (button == flyButton and isTracking)) then
+            TweenService:Create(button, tweenInfo, {BackgroundColor3 = hoverColor}):Play()
+        end
+    end)
+
+    button.MouseLeave:Connect(function()
+        if not ((button == knifeButton and isKnifeActive) or (button == flyButton and isTracking)) then
+            TweenService:Create(button, tweenInfo, {BackgroundColor3 = normalColor}):Play()
+        end
+    end)
+
+    button.MouseButton1Down:Connect(function()
+        if not ((button == knifeButton and isKnifeActive) or (button == flyButton and isTracking)) then
+            TweenService:Create(button, tweenInfo, {BackgroundColor3 = pressColor}):Play()
+        end
+    end)
+
+    button.MouseButton1Up:Connect(function()
+        if not ((button == knifeButton and isKnifeActive) or (button == flyButton and isTracking)) then
+            TweenService:Create(button, tweenInfo, {BackgroundColor3 = hoverColor}):Play()
+        end
+    end)
+end
+
+-- 设置按钮悬停效果
+setupButtonHoverEffects(knifeButton, 
+    Color3.fromRGB(61, 126, 232), 
+    Color3.fromRGB(81, 146, 252), 
+    Color3.fromRGB(41, 106, 212))
+
+setupButtonHoverEffects(flyButton, 
+    Color3.fromRGB(232, 126, 61), 
+    Color3.fromRGB(252, 146, 81), 
+    Color3.fromRGB(212, 106, 41))
+
+-- 执行小刀功能
+local function executeKnifeFunction()
+    local success1, error1 = pcall(function()
+        local args = {1}
+        game:GetService("Players").LocalPlayer.Character:WaitForChild("Knife"):WaitForChild("EnableDamage"):FireServer(unpack(args))
+    end)
+    
+    if not success1 then
+        warn("第一次调用失败: " .. error1)
+        return false
+    end
+    
+    wait(0.5)
+    
+    local success2, error2 = pcall(function()
+        local args = {0}
+        game:GetService("Players").LocalPlayer.Character:WaitForChild("Knife"):WaitForChild("EnableDamage"):FireServer(unpack(args))
+    end)
+    
+    if not success2 then
+        warn("第二次调用失败: " .. error2)
+        return false
+    end
+    
+    wait(0.5)
+    
+    local success3, error3 = pcall(function()
+        local args = {0}
+        game:GetService("Players").LocalPlayer.Character:WaitForChild("Knife"):WaitForChild("EnableDamage"):FireServer(unpack(args))
+    end)
+    
+    if not success3 then
+        warn("第三次调用失败: " .. error3)
+        return false
+    end
+    
+    return true
+end
+
+-- 小刀功能按钮点击事件
+knifeButton.MouseButton1Click:Connect(function()
+    if isKnifeActive then
+        -- 关闭功能
+        isKnifeActive = false
+        knifeButton.Text = "开启小刀功能"
+        knifeButton.BackgroundColor3 = Color3.fromRGB(61, 126, 232)
+        
+        -- 断开连接
+        if knifeActiveConnection then
+            knifeActiveConnection:Disconnect()
+            knifeActiveConnection = nil
+        end
+        
+        print("小刀功能已关闭")
+    else
+        -- 开启功能
+        isKnifeActive = true
+        knifeButton.Text = "关闭小刀功能"
+        knifeButton.BackgroundColor3 = Color3.fromRGB(232, 70, 70)
+        
+        -- 立即执行一次
+        executeKnifeFunction()
+        
+        -- 创建循环执行
+        knifeActiveConnection = RunService.Heartbeat:Connect(function()
+            if isKnifeActive then
+                executeKnifeFunction()
+            else
+                if knifeActiveConnection then
+                    knifeActiveConnection:Disconnect()
+                    knifeActiveConnection = nil
+                end
+            end
+        end)
+        
+        print("小刀功能已开启")
+    end
+end)
+
+-- 查找最近的玩家
+local function findNearestPlayer()
+    local localPlayer = game.Players.LocalPlayer
+    local localCharacter = localPlayer.Character
+    if not localCharacter then return nil end
+    
+    local localRoot = localCharacter:FindFirstChild("HumanoidRootPart")
+    if not localRoot then return nil end
+    
+    local nearestPlayer = nil
+    local nearestDistance = math.huge
+    
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= localPlayer and player.Character then
+            local character = player.Character
+            local humanoid = character:FindFirstChild("Humanoid")
+            local rootPart = character:FindFirstChild("HumanoidRootPart")
+            
+            if humanoid and humanoid.Health > 0 and rootPart then
+                local distance = (localRoot.Position - rootPart.Position).Magnitude
+                if distance < nearestDistance then
+                    nearestDistance = distance
+                    nearestPlayer = player
+                end
+            end
+        end
+    end
+    
+    return nearestPlayer, nearestDistance
+end
+
+-- 检查目标玩家是否死亡
+local function isTargetDead(player)
+    if not player or not player.Character then return true end
+    local humanoid = player.Character:FindFirstChild("Humanoid")
+    return not humanoid or humanoid.Health <= 0
+end
+
+-- 启用穿墙模式
+local function enableNoClip(character)
+    if not character then return end
+    
+    -- 保存原始碰撞组
+    for _, part in ipairs(character:GetDescendants()) do
+        if part:IsA("BasePart") then
+            originalCollisionGroups[part] = part.CollisionGroup
+            part.CollisionGroup = "NoCollision"
+        end
+    end
+    
+    -- 设置角色为透明效果
+    local humanoid = character:FindFirstChild("Humanoid")
+    if humanoid then
+        humanoid.WalkSpeed = 0 -- 防止玩家移动干扰飞行
+    end
+end
+
+-- 禁用穿墙模式
+local function disableNoClip(character)
+    if not character then return end
+    
+    -- 恢复原始碰撞组
+    for part, group in pairs(originalCollisionGroups) do
+        if part.Parent then -- 确保部件仍然存在
+            part.CollisionGroup = group
+        end
+    end
+    originalCollisionGroups = {}
+    
+    -- 恢复移动速度
+    local humanoid = character:FindFirstChild("Humanoid")
+    if humanoid then
+        humanoid.WalkSpeed = 16 -- 默认行走速度
+    end
+end
+
+-- 快速飞到玩家位置
+local function flyToPlayerQuickly(targetPlayer)
+    if not targetPlayer or not targetPlayer.Character then return false end
+    
+    local localCharacter = player.Character
+    if not localCharacter then return false end
+    
+    local humanoid = localCharacter:FindFirstChild("Humanoid")
+    local localRoot = localCharacter:FindFirstChild("HumanoidRootPart")
+    local targetRoot = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
+    
+    if not humanoid or not localRoot or not targetRoot then return false end
+    
+    -- 启用穿墙模式
+    enableNoClip(localCharacter)
+    
+    -- 保存原始状态
+    humanoid.PlatformStand = true
+    
+    -- 创建飞行控制对象
+    local bodyVelocity = Instance.new("BodyVelocity")
+    bodyVelocity.Velocity = Vector3.new(0, 0, 0)
+    bodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+    bodyVelocity.Parent = localRoot
+    
+    local bodyGyro = Instance.new("BodyGyro")
+    bodyGyro.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+    bodyGyro.P = 1000
+    bodyGyro.D = 100
+    bodyGyro.Parent = localRoot
+    
+    -- 快速飞到目标位置
+    local startTime = tick()
+    local startPosition = localRoot.Position
+    local targetPosition = targetRoot.Position
+    
+    -- 快速飞行（0.3秒内完成）
+    while tick() - startTime < 0.3 and isTracking and not isTargetDead(targetPlayer) do
+        if not targetPlayer.Character or not targetRoot then break end
+        
+        -- 更新目标位置
+        targetPosition = targetRoot.Position
+        
+        -- 计算飞行进度
+        local progress = (tick() - startTime) / 0.3
+        local currentTargetPosition = startPosition + (targetPosition - startPosition) * progress
+        
+        -- 设置速度和方向
+        local direction = (currentTargetPosition - localRoot.Position).Unit
+        local distance = (currentTargetPosition - localRoot.Position).Magnitude
+        local speed = distance / 0.05 -- 快速移动
+        
+        bodyVelocity.Velocity = direction * speed
+        
+        -- 持续面向目标玩家
+        if targetRoot then
+            bodyGyro.CFrame = CFrame.new(localRoot.Position, targetRoot.Position)
+        end
+        
+        RunService.Heartbeat:Wait()
+    end
+    
+    -- 清理飞行对象
+    bodyVelocity:Destroy()
+    bodyGyro:Destroy()
+    
+    return true
+end
+
+-- 持续跟踪目标玩家
+local function trackPlayer(targetPlayer)
+    if not targetPlayer then return end
+    
+    local localCharacter = player.Character
+    if not localCharacter then return end
+    
+    local humanoid = localCharacter:FindFirstChild("Humanoid")
+    local localRoot = localCharacter:FindFirstChild("HumanoidRootPart")
+    
+    if not humanoid or not localRoot then return end
+    
+    -- 设置飞行状态
+    humanoid.PlatformStand = true
+    
+    -- 创建飞行控制对象
+    local bodyVelocity = Instance.new("BodyVelocity")
+    bodyVelocity.Velocity = Vector3.new(0, 0, 0)
+    bodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+    bodyVelocity.Parent = localRoot
+    
+    local bodyGyro = Instance.new("BodyGyro")
+    bodyGyro.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+    bodyGyro.P = 1000
+    bodyGyro.D = 100
+    bodyGyro.Parent = localRoot
+    
+    -- 跟踪循环
+    while isTracking and not isTargetDead(targetPlayer) do
+        if not targetPlayer.Character then break end
+        
+        local targetRoot = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if not targetRoot then break end
+        
+        -- 计算方向和距离
+        local direction = (targetRoot.Position - localRoot.Position).Unit
+        local distance = (targetRoot.Position - localRoot.Position).Magnitude
+        
+        -- 设置速度和方向
+        local speed = math.min(distance / 0.1, 100) -- 限制最大速度
+        bodyVelocity.Velocity = direction * speed
+        
+        -- 持续面向目标玩家
+        bodyGyro.CFrame = CFrame.new(localRoot.Position, targetRoot.Position)
+        
+        RunService.Heartbeat:Wait()
+    end
+    
+    -- 清理跟踪状态
+    isTracking = false
+    bodyVelocity:Destroy()
+    bodyGyro:Destroy()
+    humanoid.PlatformStand = false
+    
+    -- 禁用穿墙模式
+    disableNoClip(localCharacter)
+    
+    -- 更新UI
+    flyButton.Text = "幽灵追踪"
+    flyButton.BackgroundColor3 = Color3.fromRGB(232, 126, 61)
+    
+    print("跟踪已停止 - 目标玩家死亡或消失")
+end
+
+-- 飞行按钮点击事件
+flyButton.MouseButton1Click:Connect(function()
+    if isTracking then
+        -- 停止跟踪
+        isTracking = false
+        flyButton.Text = "幽灵追踪"
+        flyButton.BackgroundColor3 = Color3.fromRGB(232, 126, 61)
+        
+        -- 禁用穿墙模式
+        if player.Character then
+            disableNoClip(player.Character)
+        end
+        
+        print("手动停止跟踪")
+    else
+        -- 查找最近玩家并开始跟踪
+        local nearestPlayer, distance = findNearestPlayer()
+        
+        if nearestPlayer then
+            isTracking = true
+            targetPlayer = nearestPlayer
+            flyButton.Text = "停止追踪"
+            flyButton.BackgroundColor3 = Color3.fromRGB(232, 70, 70)
+            
+            print("开始幽灵追踪玩家: " .. nearestPlayer.Name .. ", 距离: " .. math.floor(distance))
+            
+            -- 先快速飞到玩家位置
+            local flySuccess = pcall(function()
+                flyToPlayerQuickly(nearestPlayer)
+            end)
+            
+            if not flySuccess then
+                isTracking = false
+                flyButton.Text = "幽灵追踪"
+                flyButton.BackgroundColor3 = Color3.fromRGB(232, 126, 61)
+                
+                -- 确保禁用穿墙模式
+                if player.Character then
+                    disableNoClip(player.Character)
+                end
+                
+                warn("飞行过程中出现错误")
+                return
+            end
+            
+            -- 开始持续跟踪
+            spawn(function()
+                trackPlayer(nearestPlayer)
+            end)
+        else
+            print("没有找到其他玩家")
+        end
+    end
+end)
+
+-- 角色死亡时自动关闭所有功能
+local function onCharacterAdded(character)
+    character:WaitForChild("Humanoid").Died:Connect(function()
+        if isKnifeActive then
+            isKnifeActive = false
+            knifeButton.Text = "开启小刀功能"
+            knifeButton.BackgroundColor3 = Color3.fromRGB(61, 126, 232)
+            
+            if knifeActiveConnection then
+                knifeActiveConnection:Disconnect()
+                knifeActiveConnection = nil
+            end
+        end
+        
+        if isTracking then
+            isTracking = false
+            flyButton.Text = "幽灵追踪"
+            flyButton.BackgroundColor3 = Color3.fromRGB(232, 126, 61)
+            
+            -- 确保禁用穿墙模式
+            disableNoClip(character)
+        end
+    end)
+end
+
+player.CharacterAdded:Connect(onCharacterAdded)
+if player.Character then
+    onCharacterAdded(player.Character)
+end
+
+-- 添加触摸设备支持
+UserInputService.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch then
+        local touchPos = input.Position
+        local buttonPos = mainButton.AbsolutePosition
+        local buttonSize = mainButton.AbsoluteSize
+        
+        if touchPos.X >= buttonPos.X and touchPos.X <= buttonPos.X + buttonSize.X and
+           touchPos.Y >= buttonPos.Y and touchPos.Y <= buttonPos.Y + buttonSize.Y then
+            if not isKnifeActive then
+                mainButton.BackgroundColor3 = Color3.fromRGB(81, 146, 252)
+            end
+        else
+            if not isKnifeActive then
+                mainButton.BackgroundColor3 = Color3.fromRGB(61, 126, 232)
+            end
+        end
+    end
+end)
