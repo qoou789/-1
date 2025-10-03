@@ -1,0 +1,746 @@
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- 创建主屏幕GUI
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "AdvancedFunctionUI"
+screenGui.Parent = playerGui
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+-- 创建主按钮
+local mainButton = Instance.new("TextButton")
+mainButton.Name = "MainButton"
+mainButton.Size = UDim2.new(0, 60, 0, 60)
+mainButton.Position = UDim2.new(0, 20, 0.5, -30)
+mainButton.AnchorPoint = Vector2.new(0, 0.5)
+mainButton.BackgroundColor3 = Color3.fromRGB(61, 126, 232)
+mainButton.AutoButtonColor = false
+mainButton.Text = "⚔️"
+mainButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+mainButton.TextSize = 24
+mainButton.Font = Enum.Font.GothamBold
+mainButton.ZIndex = 2
+
+-- 添加圆角
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 12)
+corner.Parent = mainButton
+
+-- 添加阴影
+local shadow = Instance.new("ImageLabel")
+shadow.Name = "Shadow"
+shadow.Size = UDim2.new(1, 10, 1, 10)
+shadow.Position = UDim2.new(0, -5, 0, -5)
+shadow.BackgroundTransparency = 1
+shadow.Image = "rbxassetid://5554236805"
+shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
+shadow.ImageTransparency = 0.8
+shadow.ScaleType = Enum.ScaleType.Slice
+shadow.SliceCenter = Rect.new(10, 10, 118, 118)
+shadow.ZIndex = 1
+shadow.Parent = mainButton
+
+mainButton.Parent = screenGui
+
+-- 创建功能面板
+local functionPanel = Instance.new("Frame")
+functionPanel.Name = "FunctionPanel"
+functionPanel.Size = UDim2.new(0, 200, 0, 0)
+functionPanel.Position = UDim2.new(0, 90, 0.5, 0)
+functionPanel.AnchorPoint = Vector2.new(0, 0.5)
+functionPanel.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+functionPanel.ClipsDescendants = true
+functionPanel.Visible = false
+
+-- 面板圆角
+local panelCorner = Instance.new("UICorner")
+panelCorner.CornerRadius = UDim.new(0, 12)
+panelCorner.Parent = functionPanel
+
+-- 面板阴影
+local panelShadow = Instance.new("ImageLabel")
+panelShadow.Name = "PanelShadow"
+panelShadow.Size = UDim2.new(1, 10, 1, 10)
+panelShadow.Position = UDim2.new(0, -5, 0, -5)
+panelShadow.BackgroundTransparency = 1
+panelShadow.Image = "rbxassetid://5554236805"
+panelShadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
+panelShadow.ImageTransparency = 0.8
+panelShadow.ScaleType = Enum.ScaleType.Slice
+panelShadow.SliceCenter = Rect.new(10, 10, 118, 118)
+panelShadow.ZIndex = -1
+panelShadow.Parent = functionPanel
+
+-- 创建标题
+local title = Instance.new("TextLabel")
+title.Name = "Title"
+title.Size = UDim2.new(1, 0, 0, 40)
+title.Position = UDim2.new(0, 0, 0, 0)
+title.BackgroundTransparency = 1
+title.Text = "功能菜单"
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.TextSize = 18
+title.Font = Enum.Font.GothamBold
+title.Parent = functionPanel
+
+-- 创建小刀功能按钮
+local knifeButton = Instance.new("TextButton")
+knifeButton.Name = "KnifeFunctionButton"
+knifeButton.Size = UDim2.new(0.9, 0, 0, 40)
+knifeButton.Position = UDim2.new(0.05, 0, 0, 50)
+knifeButton.BackgroundColor3 = Color3.fromRGB(61, 126, 232)
+knifeButton.Text = "开启小刀功能"
+knifeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+knifeButton.TextSize = 16
+knifeButton.Font = Enum.Font.GothamBold
+knifeButton.AutoButtonColor = false
+
+-- 小刀功能按钮圆角
+local knifeButtonCorner = Instance.new("UICorner")
+knifeButtonCorner.CornerRadius = UDim.new(0, 8)
+knifeButtonCorner.Parent = knifeButton
+
+-- 创建玩家选择标签
+local selectLabel = Instance.new("TextLabel")
+selectLabel.Name = "SelectLabel"
+selectLabel.Size = UDim2.new(0.9, 0, 0, 20)
+selectLabel.Position = UDim2.new(0.05, 0, 0, 100)
+selectLabel.BackgroundTransparency = 1
+selectLabel.Text = "选择传送目标:"
+selectLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+selectLabel.TextSize = 12
+selectLabel.Font = Enum.Font.Gotham
+selectLabel.TextXAlignment = Enum.TextXAlignment.Left
+selectLabel.Parent = functionPanel
+
+-- 创建玩家选择下拉框
+local playerDropdown = Instance.new("TextButton")
+playerDropdown.Name = "PlayerDropdown"
+playerDropdown.Size = UDim2.new(0.9, 0, 0, 30)
+playerDropdown.Position = UDim2.new(0.05, 0, 0, 125)
+playerDropdown.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+playerDropdown.BorderSizePixel = 0
+playerDropdown.Text = ""
+playerDropdown.AutoButtonColor = false
+
+local dropdownCorner = Instance.new("UICorner")
+dropdownCorner.CornerRadius = UDim.new(0, 6)
+dropdownCorner.Parent = playerDropdown
+
+local dropdownText = Instance.new("TextLabel")
+dropdownText.Name = "DropdownText"
+dropdownText.Size = UDim2.new(0.8, 0, 1, 0)
+dropdownText.Position = UDim2.new(0, 10, 0, 0)
+dropdownText.BackgroundTransparency = 1
+dropdownText.Text = "全部玩家"
+dropdownText.TextColor3 = Color3.fromRGB(255, 255, 255)
+dropdownText.TextSize = 14
+dropdownText.Font = Enum.Font.Gotham
+dropdownText.TextXAlignment = Enum.TextXAlignment.Left
+dropdownText.Parent = playerDropdown
+
+local dropdownArrow = Instance.new("TextLabel")
+dropdownArrow.Name = "DropdownArrow"
+dropdownArrow.Size = UDim2.new(0, 20, 1, 0)
+dropdownArrow.Position = UDim2.new(1, -25, 0, 0)
+dropdownArrow.BackgroundTransparency = 1
+dropdownArrow.Text = "▼"
+dropdownArrow.TextColor3 = Color3.fromRGB(200, 200, 200)
+dropdownArrow.TextSize = 12
+dropdownArrow.Font = Enum.Font.Gotham
+dropdownArrow.Parent = playerDropdown
+
+playerDropdown.Parent = functionPanel
+
+-- 创建传送按钮
+local teleportButton = Instance.new("TextButton")
+teleportButton.Name = "TeleportButton"
+teleportButton.Size = UDim2.new(0.9, 0, 0, 40)
+teleportButton.Position = UDim2.new(0.05, 0, 0, 160)
+teleportButton.BackgroundColor3 = Color3.fromRGB(126, 61, 232)
+teleportButton.Text = "开启传送"
+teleportButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+teleportButton.TextSize = 16
+teleportButton.Font = Enum.Font.GothamBold
+teleportButton.AutoButtonColor = false
+
+-- 传送按钮圆角
+local teleportButtonCorner = Instance.new("UICorner")
+teleportButtonCorner.CornerRadius = UDim.new(0, 8)
+teleportButtonCorner.Parent = teleportButton
+
+-- 创建自动传送按钮
+local autoTeleportButton = Instance.new("TextButton")
+autoTeleportButton.Name = "AutoTeleportButton"
+autoTeleportButton.Size = UDim2.new(0.9, 0, 0, 40)
+autoTeleportButton.Position = UDim2.new(0.05, 0, 0, 210)
+autoTeleportButton.BackgroundColor3 = Color3.fromRGB(61, 232, 126)
+autoTeleportButton.Text = "开启自动传送"
+autoTeleportButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+autoTeleportButton.TextSize = 16
+autoTeleportButton.Font = Enum.Font.GothamBold
+autoTeleportButton.AutoButtonColor = false
+
+-- 自动传送按钮圆角
+local autoTeleportButtonCorner = Instance.new("UICorner")
+autoTeleportButtonCorner.CornerRadius = UDim.new(0, 8)
+autoTeleportButtonCorner.Parent = autoTeleportButton
+
+teleportButton.Parent = functionPanel
+autoTeleportButton.Parent = functionPanel
+knifeButton.Parent = functionPanel
+functionPanel.Parent = screenGui
+
+-- 状态变量
+local isOpen = false
+local isKnifeActive = false
+local isTeleportActive = false
+local isAutoTeleportActive = false
+local isDropdownOpen = false
+local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+local knifeActiveConnection = nil
+local teleportConnection = nil
+local autoTeleportConnection = nil
+local selectedPlayer = "全部玩家" -- 默认选择全部玩家
+
+-- 自动传送检测范围
+local AUTO_TELEPORT_RANGE = 100
+
+-- 更新面板大小
+local function updatePanelSize()
+    if isDropdownOpen then
+        functionPanel.Size = UDim2.new(0, 200, 0, 320)
+    else
+        functionPanel.Size = UDim2.new(0, 200, 0, 260)
+    end
+end
+
+-- 主按钮点击事件
+mainButton.MouseButton1Click:Connect(function()
+    if isOpen then
+        -- 关闭面板
+        local closeTween = TweenService:Create(functionPanel, tweenInfo, {Size = UDim2.new(0, 200, 0, 0)})
+        closeTween:Play()
+        closeTween.Completed:Connect(function()
+            functionPanel.Visible = false
+            isDropdownOpen = false
+        end)
+    else
+        -- 打开面板
+        functionPanel.Visible = true
+        updatePanelSize()
+        local openTween = TweenService:Create(functionPanel, tweenInfo, {Size = UDim2.new(0, 200, 0, isDropdownOpen and 320 or 260)})
+        openTween:Play()
+    end
+    isOpen = not isOpen
+end)
+
+-- 按钮交互效果函数
+local function setupButtonHoverEffects(button, normalColor, hoverColor, pressColor)
+    button.MouseEnter:Connect(function()
+        if not ((button == knifeButton and isKnifeActive) or (button == teleportButton and isTeleportActive) or (button == autoTeleportButton and isAutoTeleportActive)) then
+            TweenService:Create(button, tweenInfo, {BackgroundColor3 = hoverColor}):Play()
+        end
+    end)
+
+    button.MouseLeave:Connect(function()
+        if not ((button == knifeButton and isKnifeActive) or (button == teleportButton and isTeleportActive) or (button == autoTeleportButton and isAutoTeleportActive)) then
+            TweenService:Create(button, tweenInfo, {BackgroundColor3 = normalColor}):Play()
+        end
+    end)
+
+    button.MouseButton1Down:Connect(function()
+        if not ((button == knifeButton and isKnifeActive) or (button == teleportButton and isTeleportActive) or (button == autoTeleportButton and isAutoTeleportActive)) then
+            TweenService:Create(button, tweenInfo, {BackgroundColor3 = pressColor}):Play()
+        end
+    end)
+
+    button.MouseButton1Up:Connect(function()
+        if not ((button == knifeButton and isKnifeActive) or (button == teleportButton and isTeleportActive) or (button == autoTeleportButton and isAutoTeleportActive)) then
+            TweenService:Create(button, tweenInfo, {BackgroundColor3 = hoverColor}):Play()
+        end
+    end)
+end
+
+-- 设置按钮悬停效果
+setupButtonHoverEffects(knifeButton, 
+    Color3.fromRGB(61, 126, 232), 
+    Color3.fromRGB(81, 146, 252), 
+    Color3.fromRGB(41, 106, 212))
+
+setupButtonHoverEffects(teleportButton, 
+    Color3.fromRGB(126, 61, 232), 
+    Color3.fromRGB(146, 81, 252), 
+    Color3.fromRGB(106, 41, 212))
+
+setupButtonHoverEffects(autoTeleportButton, 
+    Color3.fromRGB(61, 232, 126), 
+    Color3.fromRGB(81, 252, 146), 
+    Color3.fromRGB(41, 212, 106))
+
+-- 下拉框交互效果
+playerDropdown.MouseEnter:Connect(function()
+    TweenService:Create(playerDropdown, tweenInfo, {BackgroundColor3 = Color3.fromRGB(60, 60, 60)}):Play()
+end)
+
+playerDropdown.MouseLeave:Connect(function()
+    TweenService:Create(playerDropdown, tweenInfo, {BackgroundColor3 = Color3.fromRGB(50, 50, 50)}):Play()
+end)
+
+-- 执行小刀功能
+local function executeKnifeFunction()
+    local success1, error1 = pcall(function()
+        local args = {1}
+        game:GetService("Players").LocalPlayer.Character:WaitForChild("Knife"):WaitForChild("EnableDamage"):FireServer(unpack(args))
+    end)
+    
+    if not success1 then
+        warn("第一次调用失败: " .. error1)
+        return false
+    end
+    
+    wait(0.5)
+    
+    local success2, error2 = pcall(function()
+        local args = {0}
+        game:GetService("Players").LocalPlayer.Character:WaitForChild("Knife"):WaitForChild("EnableDamage"):FireServer(unpack(args))
+    end)
+    
+    if not success2 then
+        warn("第二次调用失败: " .. error2)
+        return false
+    end
+    
+    wait(0.5)
+    
+    local success3, error3 = pcall(function()
+        local args = {0}
+        game:GetService("Players").LocalPlayer.Character:WaitForChild("Knife"):WaitForChild("EnableDamage"):FireServer(unpack(args))
+    end)
+    
+    if not success3 then
+        warn("第三次调用失败: " .. error3)
+        return false
+    end
+    
+    return true
+end
+
+-- 小刀功能按钮点击事件
+knifeButton.MouseButton1Click:Connect(function()
+    if isKnifeActive then
+        -- 关闭功能
+        isKnifeActive = false
+        knifeButton.Text = "开启小刀功能"
+        knifeButton.BackgroundColor3 = Color3.fromRGB(61, 126, 232)
+        
+        -- 断开连接
+        if knifeActiveConnection then
+            knifeActiveConnection:Disconnect()
+            knifeActiveConnection = nil
+        end
+        
+        print("小刀功能已关闭")
+    else
+        -- 开启功能
+        isKnifeActive = true
+        knifeButton.Text = "关闭小刀功能"
+        knifeButton.BackgroundColor3 = Color3.fromRGB(232, 70, 70)
+        
+        -- 立即执行一次
+        executeKnifeFunction()
+        
+        -- 创建循环执行
+        knifeActiveConnection = RunService.Heartbeat:Connect(function()
+            if isKnifeActive then
+                executeKnifeFunction()
+            else
+                if knifeActiveConnection then
+                    knifeActiveConnection:Disconnect()
+                    knifeActiveConnection = nil
+                end
+            end
+        end)
+        
+        print("小刀功能已开启")
+    end
+end)
+
+-- 查找附近的玩家（100范围内）
+local function findNearbyPlayers()
+    local localCharacter = player.Character
+    if not localCharacter then return {} end
+    
+    local localRoot = localCharacter:FindFirstChild("HumanoidRootPart")
+    if not localRoot then return {} end
+    
+    local nearbyPlayers = {}
+    
+    for _, otherPlayer in ipairs(Players:GetPlayers()) do
+        if otherPlayer ~= player and otherPlayer.Character then
+            local character = otherPlayer.Character
+            local humanoid = character:FindFirstChild("Humanoid")
+            local rootPart = character:FindFirstChild("HumanoidRootPart")
+            
+            if humanoid and humanoid.Health > 0 and rootPart then
+                local distance = (localRoot.Position - rootPart.Position).Magnitude
+                if distance <= AUTO_TELEPORT_RANGE then
+                    table.insert(nearbyPlayers, otherPlayer)
+                end
+            end
+        end
+    end
+    
+    return nearbyPlayers
+end
+
+-- 创建玩家选择下拉菜单
+local function createPlayerDropdown()
+    if isDropdownOpen then
+        -- 关闭下拉菜单
+        local dropdownMenu = functionPanel:FindFirstChild("DropdownMenu")
+        if dropdownMenu then
+            dropdownMenu:Destroy()
+        end
+        isDropdownOpen = false
+        updatePanelSize()
+        teleportButton.Position = UDim2.new(0.05, 0, 0, 160)
+        autoTeleportButton.Position = UDim2.new(0.05, 0, 0, 210)
+        return
+    end
+    
+    isDropdownOpen = true
+    updatePanelSize()
+    
+    -- 创建下拉菜单背景
+    local dropdownMenu = Instance.new("Frame")
+    dropdownMenu.Name = "DropdownMenu"
+    dropdownMenu.Size = UDim2.new(0.9, 0, 0, 150)
+    dropdownMenu.Position = UDim2.new(0.05, 0, 0, 160)
+    dropdownMenu.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    dropdownMenu.BorderSizePixel = 0
+    dropdownMenu.ZIndex = 10
+    
+    local menuCorner = Instance.new("UICorner")
+    menuCorner.CornerRadius = UDim.new(0, 6)
+    menuCorner.Parent = dropdownMenu
+    
+    local scrollingFrame = Instance.new("ScrollingFrame")
+    scrollingFrame.Size = UDim2.new(1, 0, 1, 0)
+    scrollingFrame.Position = UDim2.new(0, 0, 0, 0)
+    scrollingFrame.BackgroundTransparency = 1
+    scrollingFrame.ScrollBarThickness = 4
+    scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+    scrollingFrame.Parent = dropdownMenu
+    
+    -- 添加"全部玩家"选项
+    local allPlayersOption = Instance.new("TextButton")
+    allPlayersOption.Size = UDim2.new(1, -10, 0, 30)
+    allPlayersOption.Position = UDim2.new(0, 5, 0, 5)
+    allPlayersOption.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    allPlayersOption.Text = "全部玩家"
+    allPlayersOption.TextColor3 = Color3.fromRGB(255, 255, 255)
+    allPlayersOption.TextSize = 14
+    allPlayersOption.Font = Enum.Font.Gotham
+    allPlayersOption.AutoButtonColor = false
+    
+    local optionCorner = Instance.new("UICorner")
+    optionCorner.CornerRadius = UDim.new(0, 4)
+    optionCorner.Parent = allPlayersOption
+    
+    allPlayersOption.MouseButton1Click:Connect(function()
+        selectedPlayer = "全部玩家"
+        dropdownText.Text = "全部玩家"
+        dropdownMenu:Destroy()
+        isDropdownOpen = false
+        updatePanelSize()
+        teleportButton.Position = UDim2.new(0.05, 0, 0, 160)
+        autoTeleportButton.Position = UDim2.new(0.05, 0, 0, 210)
+    end)
+    
+    allPlayersOption.Parent = scrollingFrame
+    
+    -- 添加其他玩家选项
+    local yOffset = 40
+    local optionCount = 1
+    
+    for _, otherPlayer in ipairs(Players:GetPlayers()) do
+        if otherPlayer ~= player and otherPlayer.Character then
+            local playerOption = Instance.new("TextButton")
+            playerOption.Size = UDim2.new(1, -10, 0, 30)
+            playerOption.Position = UDim2.new(0, 5, 0, yOffset)
+            playerOption.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+            playerOption.Text = otherPlayer.Name
+            playerOption.TextColor3 = Color3.fromRGB(255, 255, 255)
+            playerOption.TextSize = 14
+            playerOption.Font = Enum.Font.Gotham
+            playerOption.AutoButtonColor = false
+            playerOption.TextTruncate = Enum.TextTruncate.AtEnd
+            
+            local playerOptionCorner = Instance.new("UICorner")
+            playerOptionCorner.CornerRadius = UDim.new(0, 4)
+            playerOptionCorner.Parent = playerOption
+            
+            playerOption.MouseButton1Click:Connect(function()
+                selectedPlayer = otherPlayer.Name
+                dropdownText.Text = otherPlayer.Name
+                dropdownMenu:Destroy()
+                isDropdownOpen = false
+                updatePanelSize()
+                teleportButton.Position = UDim2.new(0.05, 0, 0, 160)
+                autoTeleportButton.Position = UDim2.new(0.05, 0, 0, 210)
+            end)
+            
+            playerOption.Parent = scrollingFrame
+            yOffset = yOffset + 35
+            optionCount = optionCount + 1
+        end
+    end
+    
+    -- 更新滚动区域大小
+    scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, yOffset)
+    
+    dropdownMenu.Parent = functionPanel
+    teleportButton.Position = UDim2.new(0.05, 0, 0, 320)
+    autoTeleportButton.Position = UDim2.new(0.05, 0, 0, 370)
+end
+
+-- 下拉框点击事件
+playerDropdown.MouseButton1Click:Connect(createPlayerDropdown)
+
+-- 传送玩家到当前位置前方1.5单位距离
+local function teleportPlayers()
+    local localCharacter = player.Character
+    if not localCharacter then
+        warn("本地玩家角色不存在")
+        return 0
+    end
+    
+    local localRoot = localCharacter:FindFirstChild("HumanoidRootPart")
+    if not localRoot then
+        warn("本地玩家没有HumanoidRootPart")
+        return 0
+    end
+    
+    -- 计算前方1.5单位距离的位置
+    local forwardDirection = localRoot.CFrame.LookVector
+    local targetPosition = localRoot.Position + forwardDirection * 1.5 -- 前方1.5个单位
+    
+    local teleportedCount = 0
+    
+    if selectedPlayer == "全部玩家" then
+        -- 传送所有玩家
+        for _, otherPlayer in ipairs(Players:GetPlayers()) do
+            if otherPlayer ~= player and otherPlayer.Character then
+                local character = otherPlayer.Character
+                local humanoidRoot = character:FindFirstChild("HumanoidRootPart")
+                
+                if humanoidRoot then
+                    -- 设置玩家位置
+                    humanoidRoot.CFrame = CFrame.new(targetPosition)
+                    teleportedCount = teleportedCount + 1
+                end
+            end
+        end
+    else
+        -- 传送特定玩家
+        local targetPlayer = Players:FindFirstChild(selectedPlayer)
+        if targetPlayer and targetPlayer.Character then
+            local character = targetPlayer.Character
+            local humanoidRoot = character:FindFirstChild("HumanoidRootPart")
+            
+            if humanoidRoot then
+                -- 设置玩家位置
+                humanoidRoot.CFrame = CFrame.new(targetPosition)
+                teleportedCount = 1
+            end
+        else
+            warn("找不到玩家: " .. selectedPlayer)
+        end
+    end
+    
+    return teleportedCount
+end
+
+-- 自动传送功能：检测附近100范围内的玩家并持续传送
+local function autoTeleportNearbyPlayers()
+    local localCharacter = player.Character
+    if not localCharacter then return 0 end
+    
+    local localRoot = localCharacter:FindFirstChild("HumanoidRootPart")
+    if not localRoot then return 0 end
+    
+    -- 计算前方1.5单位距离的位置
+    local forwardDirection = localRoot.CFrame.LookVector
+    local targetPosition = localRoot.Position + forwardDirection * 1.5 -- 前方1.5个单位
+    
+    -- 查找附近100范围内的玩家
+    local nearbyPlayers = findNearbyPlayers()
+    local teleportedCount = 0
+    
+    for _, nearbyPlayer in ipairs(nearbyPlayers) do
+        if nearbyPlayer.Character then
+            local character = nearbyPlayer.Character
+            local humanoidRoot = character:FindFirstChild("HumanoidRootPart")
+            local humanoid = character:FindFirstChild("Humanoid")
+            
+            if humanoidRoot and humanoid and humanoid.Health > 0 then
+                -- 设置玩家位置
+                humanoidRoot.CFrame = CFrame.new(targetPosition)
+                teleportedCount = teleportedCount + 1
+            end
+        end
+    end
+    
+    return teleportedCount
+end
+
+-- 传送按钮点击事件 - 切换模式
+teleportButton.MouseButton1Click:Connect(function()
+    if isTeleportActive then
+        -- 关闭传送功能
+        isTeleportActive = false
+        teleportButton.Text = "开启传送"
+        teleportButton.BackgroundColor3 = Color3.fromRGB(126, 61, 232)
+        
+        -- 断开连接
+        if teleportConnection then
+            teleportConnection:Disconnect()
+            teleportConnection = nil
+        end
+        
+        print("传送功能已关闭")
+    else
+        -- 开启传送功能
+        isTeleportActive = true
+        teleportButton.Text = "关闭传送"
+        teleportButton.BackgroundColor3 = Color3.fromRGB(232, 70, 70)
+        
+        -- 立即执行一次传送
+        local count = teleportPlayers()
+        print("传送功能已开启，已传送 " .. count .. " 名玩家到前方1.5单位")
+        
+        -- 创建循环传送
+        teleportConnection = RunService.Heartbeat:Connect(function()
+            if isTeleportActive then
+                teleportPlayers()
+            else
+                if teleportConnection then
+                    teleportConnection:Disconnect()
+                    teleportConnection = nil
+                end
+            end
+        end)
+    end
+end)
+
+-- 自动传送按钮点击事件 - 切换模式
+autoTeleportButton.MouseButton1Click:Connect(function()
+    if isAutoTeleportActive then
+        -- 关闭自动传送功能
+        isAutoTeleportActive = false
+        autoTeleportButton.Text = "开启自动传送"
+        autoTeleportButton.BackgroundColor3 = Color3.fromRGB(61, 232, 126)
+        
+        -- 断开连接
+        if autoTeleportConnection then
+            autoTeleportConnection:Disconnect()
+            autoTeleportConnection = nil
+        end
+        
+        print("自动传送功能已关闭")
+    else
+        -- 开启自动传送功能
+        isAutoTeleportActive = true
+        autoTeleportButton.Text = "关闭自动传送"
+        autoTeleportButton.BackgroundColor3 = Color3.fromRGB(232, 70, 70)
+        
+        -- 立即执行一次自动传送
+        local count = autoTeleportNearbyPlayers()
+        print("自动传送功能已开启，检测到 " .. count .. " 名附近玩家并传送到前方1.5单位")
+        
+        -- 创建循环自动传送
+        autoTeleportConnection = RunService.Heartbeat:Connect(function()
+            if isAutoTeleportActive then
+                local count = autoTeleportNearbyPlayers()
+                if count > 0 then
+                    -- 可选：在控制台显示传送信息
+                    -- print("自动传送了 " .. count .. " 名附近玩家")
+                end
+            else
+                if autoTeleportConnection then
+                    autoTeleportConnection:Disconnect()
+                    autoTeleportConnection = nil
+                end
+            end
+        end)
+    end
+end)
+
+-- 角色死亡时自动关闭所有功能
+local function onCharacterAdded(character)
+    character:WaitForChild("Humanoid").Died:Connect(function()
+        if isKnifeActive then
+            isKnifeActive = false
+            knifeButton.Text = "开启小刀功能"
+            knifeButton.BackgroundColor3 = Color3.fromRGB(61, 126, 232)
+            
+            if knifeActiveConnection then
+                knifeActiveConnection:Disconnect()
+                knifeActiveConnection = nil
+            end
+        end
+        
+        if isTeleportActive then
+            isTeleportActive = false
+            teleportButton.Text = "开启传送"
+            teleportButton.BackgroundColor3 = Color3.fromRGB(126, 61, 232)
+            
+            if teleportConnection then
+                teleportConnection:Disconnect()
+                teleportConnection = nil
+            end
+        end
+        
+        if isAutoTeleportActive then
+            isAutoTeleportActive = false
+            autoTeleportButton.Text = "开启自动传送"
+            autoTeleportButton.BackgroundColor3 = Color3.fromRGB(61, 232, 126)
+            
+            if autoTeleportConnection then
+                autoTeleportConnection:Disconnect()
+                autoTeleportConnection = nil
+            end
+        end
+    end)
+end
+
+player.CharacterAdded:Connect(onCharacterAdded)
+if player.Character then
+    onCharacterAdded(player.Character)
+end
+
+-- 添加触摸设备支持
+UserInputService.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch then
+        local touchPos = input.Position
+        local buttonPos = mainButton.AbsolutePosition
+        local buttonSize = mainButton.AbsoluteSize
+        
+        if touchPos.X >= buttonPos.X and touchPos.X <= buttonPos.X + buttonSize.X and
+           touchPos.Y >= buttonPos.Y and touchPos.Y <= buttonPos.Y + buttonSize.Y then
+            if not isKnifeActive then
+                mainButton.BackgroundColor3 = Color3.fromRGB(81, 146, 252)
+            end
+        else
+            if not isKnifeActive then
+                mainButton.BackgroundColor3 = Color3.fromRGB(61, 126, 232)
+            end
+        end
+    end
+end)
